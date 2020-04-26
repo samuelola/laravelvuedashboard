@@ -32,4 +32,9 @@ class User extends Authenticatable
 
         return ucfirst($sam);
     }
+
+    public function getRoleAttribute($roll){
+
+        return ucfirst($roll);
+    }
 }

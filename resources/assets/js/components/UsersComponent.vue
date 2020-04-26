@@ -22,9 +22,8 @@
                        <thead class="thead-dark">
                          <tr>
                            <th scope="col">ID</th>
-                           <th scope="col">First</th>
+                           <th scope="col">Name</th>
                            <th scope="col">Email</th>
-                           <th scope="col">Password</th>
                            <th scope="col">Role</th>
                            <th scope="col">Bio</th>
                            <th scope="col">Registered_At</th>
@@ -32,14 +31,14 @@
                          </tr>
                        </thead>
                        <tbody>
-                         <tr>
-                           <th scope="row">1</th>
-                           <td>Mark</td>
-                           <td>Otto</td>
-                           <td>@mdo</td>
-                           <td>2</td>
-                           <td>4</td>
-                           <td>7</td>
+                         <tr v-for="user in users" :key="user.id">
+                           
+                           <td>{{user.id}}</td>
+                           <td>{{user.name}}</td>
+                           <td>{{user.email}}</td>
+                           <td>{{user.role}}</td>
+                           <td>{{user.bio}}</td>
+                           <td>{{user.created_at | myDate}}</td>
                            <td>
                              <a href="#">
                                <i class="fa fa-edit btn btn-primary btn-xs"></i>
@@ -49,18 +48,7 @@
                              </a>
                            </td>
                          </tr>
-                         <tr>
-                           <th scope="row">2</th>
-                           <td>Jacob</td>
-                           <td>Thornton</td>
-                           <td>@fat</td>
-                         </tr>
-                         <tr>
-                           <th scope="row">3</th>
-                           <td>Larry</td>
-                           <td>the Bird</td>
-                           <td>@twitter</td>
-                         </tr>
+                        
                        </tbody>
                      </table>
                   </div>
@@ -81,28 +69,30 @@
                           <form @submit.prevent="createUser">
                           <div class="modal-body">
                              <div class="form-group">
-                                   <label>Username</label>
+                                 
                                    <input v-model="form.name" type="text" name="name"
+                                   placeholder="Enter your Name" 
                                      class="form-control" :class="{ 'is-invalid': form.errors.has('name') }">
                                    <has-error :form="form" field="name"></has-error>
                              </div>
 
                                  <div class="form-group">
-                                   <label>Email</label>
+                                   
                                    <input v-model="form.email" type="email" name="email"
+                                   placeholder="Enter your Email" 
                                      class="form-control" :class="{ 'is-invalid': form.errors.has('email') }">
                                    <has-error :form="form" field="email"></has-error>
                                  </div>
 
                                  <div class="form-group">
-                                   <label>Password</label>
+                                   
                                    <input v-model="form.password" type="password" name="password"
+                                    placeholder="Enter your Email" 
                                      class="form-control" :class="{ 'is-invalid': form.errors.has('password') }">
                                    <has-error :form="form" field="password"></has-error>
                                  </div>
 
                                  <div class="form-group">
-                                   <label>Role</label>
 
                                    <select name="role" id="" v-model="form.role" class="form-control" :class="{ 'is-invalid': form.errors.has('role') }">
                                        <option value="">Select Role</option>
@@ -117,11 +107,11 @@
 
 
                                  <div class="form-group">
-                                   <label>Bio</label>
                                    
-                                   <textarea v-model="form.bio" name="bio" id="" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': form.errors.has('bio') }" style="margin-top: 0px; margin-bottom: 0px; height: 67px;">
+                                   
+                                   <textarea v-model="form.bio" name="bio" id="" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': form.errors.has('bio') }" style="margin-top: 0px; margin-bottom: 0px; height: 67px;"  placeholder="Enter your Bio " >
                                        
-
+                                         
                                    </textarea>
 
                                     <has-error :form="form" field="bio"></has-error>
@@ -129,9 +119,10 @@
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-primary">Create</button>
+                            <button type="submit" class="btn btn-primary">Create</button>
                           </div>
                           </form>
+
                         </div>
                       </div>
                     </div>
@@ -146,7 +137,9 @@
     export default {
         
         data () {
+
             return {
+              users:{},
               // Create a new form instance
               form: new Form({
                 name: '',
@@ -161,16 +154,22 @@
           },
 
           methods:{
-            
+            retrieve(){
+                 
+                 axios.get("api/user").then(({data})=>(this.users = data.data));
+            },
              createUser(){
                 // submit the form with a POST request
+
                 this.form.post('api/user');
              }
 
           },
+          
 
         mounted() {
-            console.log('Component mounted.')
+            // console.log('Component mounted.')
+            this.retrieve();
         }
     }
 </script>
