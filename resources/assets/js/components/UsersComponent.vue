@@ -10,7 +10,7 @@
                     <div class="card-tools">
                       <div class="input-group input-group-sm" style="width: 150px;">
                        
-                          <button class="btn btn-success btn-sm wol" data-toggle="modal" data-target="#addNew">Add New  <i class="fas fa-user-plus fa fw"></i></button> 
+                          <button class="btn btn-success btn-sm wol" @click="newModal">Add New  <i class="fas fa-user-plus fa fw"></i></button> 
                
                        
                       </div>
@@ -40,10 +40,10 @@
                            <td>{{user.bio}}</td>
                            <td>{{user.created_at | myDate}}</td>
                            <td>
-                             <a href="#">
+                             <a href="#" @click = "editModal(user)">
                                <i class="fa fa-edit btn btn-primary btn-xs"></i>
                              </a>
-                             <a href="#">
+                             <a href="#" @click="deleteUser(user.id)">
                                 <i class="fa fa-trash btn btn-danger btn-xs"></i> 
                              </a>
                            </td>
@@ -61,12 +61,13 @@
                       <div class="modal-dialog modal-dialog-centered" role="document">
                         <div class="modal-content">
                           <div class="modal-header">
-                            <h5 class="modal-title" id="addNewLabel">Add User</h5>
+                            <h5 v-show="editmode" class="modal-title" id="addNewLabel">Edit User</h5>
+                            <h5 v-show="!editmode" class="modal-title" id="addNewLabel">Add User</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                               <span aria-hidden="true">&times;</span>
                             </button>
                           </div>
-                          <form @submit.prevent="createUser">
+                          <form @submit.prevent="editmode ? updateUser() : createUser()">
                           <div class="modal-body">
                              <div class="form-group">
                                  
@@ -86,18 +87,19 @@
 
                                  <div class="form-group">
                                    
-                                   <input v-model="form.password" type="password" name="password"
-                                    placeholder="Enter your Email" 
+                                   <input v-model="form.password" type="password" name="password" id="password" 
+                                    placeholder="Enter your Password" 
                                      class="form-control" :class="{ 'is-invalid': form.errors.has('password') }">
                                    <has-error :form="form" field="password"></has-error>
                                  </div>
 
                                  <div class="form-group">
 
-                                   <select name="role" id="" v-model="form.role" class="form-control" :class="{ 'is-invalid': form.errors.has('role') }">
+                                   <select name="role" id="role" v-model="form.role " class="form-control" :class="{ 'is-invalid': form.errors.has('role') }">
                                        <option value="">Select Role</option>
                                        <option value="admin">Admin</option>
                                        <option value="author">Author</option>
+                                        <option value="user">User</option>
                                        <option value="subscriber">Subscriber</option>
                                    </select>
                                    
@@ -109,7 +111,7 @@
                                  <div class="form-group">
                                    
                                    
-                                   <textarea v-model="form.bio" name="bio" id="" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': form.errors.has('bio') }" style="margin-top: 0px; margin-bottom: 0px; height: 67px;"  placeholder="Enter your Bio " >
+                                   <textarea v-model="form.bio" name="bio" id="bio" cols="30" rows="10" class="form-control" :class="{ 'is-invalid': form.errors.has('bio') }" style="margin-top: 0px; margin-bottom: 0px; height: 67px;"  placeholder="Enter your Bio " >
                                        
                                          
                                    </textarea>
@@ -119,7 +121,8 @@
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Create</button>
+                            <button v-show="editmode" type="submit" class="btn btn-success">Update</button>
+                            <button v-show="!editmode" type="submit" class="btn btn-primary">Create</button>
                           </div>
                           </form>
 
@@ -139,9 +142,11 @@
         data () {
 
             return {
+              editmode:false,  
               users:{},
               // Create a new form instance
               form: new Form({
+                id: '',
                 name: '',
                 email:'',
                 password: '',
@@ -154,14 +159,127 @@
           },
 
           methods:{
+
+            updateUser(){
+               
+               // console.log('updating user');
+
+               this.$Progress.start();
+               this.form.put('api/user/'+ this.form.id)
+               .then(()=>{
+
+                 Fire.$emit('AfterUpdate');
+
+                 $('#addNew').modal('hide');
+
+
+                 Swal.fire(
+                   'Updated!',
+                   'Your file has been updated.',
+                   'success'
+                 )
+
+                 this.$Progress.finish();
+               })
+               .catch(()=>{
+
+                   this.$Progress.fail();
+               });
+            },
+
+            editModal(user){
+                  this.editmode = true;
+                  this.form.reset();
+                  $('#addNew').modal('show');
+                  this.form.fill(user);
+            },
+
+            newModal(){
+                  this.editmode = false;
+                  this.form.reset();
+                  $('#addNew').modal('show');
+            },
+
+
+            // delete the data 
+
+            deleteUser(id){
+
+            
+                Swal.fire({
+                  title: 'Are you sure?',
+                  text: "You won't be able to revert this!",
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#3085d6',
+                  cancelButtonColor: '#d33',
+                  confirmButtonText: 'Yes, delete it!'
+                }).then((result) => {
+
+                  if (result.value) {
+
+                    this.form.delete("api/user/" + id).then(()=>{
+                       
+                       Swal.fire(
+                         'Deleted!',
+                         'Your file has been deleted.',
+                         'success'
+                       )
+
+                       Fire.$emit('AfterDelete');
+
+                    })
+
+                    .catch(()=>{
+
+                        Swal.fire(
+                           
+                           'Failed',
+                           'Something is wrong',
+                           'warning'
+
+                        )
+
+                    });
+                    
+                  }
+
+
+                })
+
+            },
+             // get the data with axios
             retrieve(){
                  
                  axios.get("api/user").then(({data})=>(this.users = data.data));
             },
-             createUser(){
-                // submit the form with a POST request
 
-                this.form.post('api/user');
+             // submit the form with a POST request
+             createUser(){
+               
+                this.$Progress.start();
+
+                this.form.post('api/user')
+
+                .then(()=>{
+
+                    Fire.$emit('AfterCreate');
+
+                    $('#addNew').modal('hide');
+                     
+                     Toast.fire({
+                       icon: 'success',
+                       title: 'User created successfully'
+                     })
+
+                this.$Progress.finish(); 
+                })
+                .catch(()=>{
+
+                   this.$Progress.fail();
+               });
+
+                
              }
 
           },
@@ -170,6 +288,23 @@
         mounted() {
             // console.log('Component mounted.')
             this.retrieve();
+            Fire.$on('AfterCreate',()=>{
+
+                this.retrieve();
+            });
+
+            Fire.$on('AfterDelete',()=>{
+
+                this.retrieve();
+            });
+
+            Fire.$on('AfterUpdate',()=>{
+
+                this.retrieve();
+            });
+             //this is to listen to an event
+            // setInterval(()=>this.retrieve(), 3000);
+
         }
     }
 </script>
